@@ -16,7 +16,8 @@ Ce projet démontre un pipeline CI/CD complet qui déploie automatiquement une i
 
 ```mermaid
 graph TB
-    A[📱 Push GitHub] --> B[⚙️ GitHub Actions]
+[📱 Push GitHub]
+[⚙️ GitHub Actions se déclenche automatiquement car push sur la branche main]
 [🔐 Login Azure]
 [🏗️ Déploiement Bicep via le script bash deploy_infra.sh dans le clouddrive Azure]
 [🌐 Web App]
