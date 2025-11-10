@@ -16,18 +16,27 @@ Ce projet démontre un pipeline CI/CD complet qui déploie automatiquement une i
 
 ```mermaid
 graph TB
-[📱 Push GitHub]
-[⚙️ GitHub Actions se déclenche automatiquement car push sur la branche main]
-[🔐 Login Azure]
-[🏗️ Déploiement Bicep via le script bash deploy_infra.sh dans le clouddrive Azure]
-[🌐 Web App]
-[⚡ App Service Plan]
-[🗄️ Storage Account]
-[🚀 Déploiement App Node.js]
-[🌍 App Live]
-    
-    style A fill:#ff6b6b
-    style J fill:#51cf66
+    %% Étapes principales du pipeline
+    A[📱 Push GitHub] --> B[⚙️ GitHub Actions]
+    B --> C[🔐 Connexion à Azure]
+    C --> D[🏗️ Déploiement Infrastructure Bicep<br/>(via deploy_infra.sh dans clouddrive)]
+    D --> E[🌐 Création Web App + Ressources Azure]
+    E --> F[⚡ App Service Plan]
+    E --> G[🗄️ Storage Account]
+    E --> H[🚀 Déploiement Application Node.js]
+    H --> I[🌍 Application Live sur Azure]
+
+    %% Styles des blocs
+    style A fill:#ff6b6b,stroke:#333,stroke-width:2px,color:#fff
+    style B fill:#74c0fc,stroke:#333,stroke-width:2px,color:#fff
+    style C fill:#9775fa,stroke:#333,stroke-width:2px,color:#fff
+    style D fill:#ffd43b,stroke:#333,stroke-width:2px,color:#000
+    style E fill:#4dabf7,stroke:#333,stroke-width:2px,color:#fff
+    style F fill:#63e6be,stroke:#333,stroke-width:2px,color:#000
+    style G fill:#94d82d,stroke:#333,stroke-width:2px,color:#000
+    style H fill:#ffa94d,stroke:#333,stroke-width:2px,color:#000
+    style I fill:#40c057,stroke:#333,stroke-width:2px,color:#fff
+
 
 ⚙️ Workflow Complet CI/CD
 🔄 Processus Automatisé
