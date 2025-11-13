@@ -24,7 +24,7 @@ graph LR
     
     style A fill:#ff6b6b
     style F fill:#51cf66
-
+```
 
 ⚙️ Workflow Complet CI/CD
 🔄 Processus Automatisé
