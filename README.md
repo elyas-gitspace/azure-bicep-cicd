@@ -57,8 +57,9 @@ az deployment group create \
   --template-file main.bicep \
   --parameters appServiceName=elyassWebApp
 
-📁 Structure du Projet
-text
+## 📁 Structure du Projet
+
+```bash
 azure-bicep-cicd/
 ├── 📁 .github/workflows/
 │   └── 🚀 deploy.yml              # Pipeline GitHub Actions
@@ -70,11 +71,14 @@ azure-bicep-cicd/
 ├── 📁 scripts/
 │   └── 🔧 deploy_infra.sh         # Script de déploiement Bicep
 └── 📄 README.md                   # Documentation
+```
 
 L'app node js est ainsi disponible sur le lien webapp fournit par Azure : https://elyasswebapp.azurewebsites.net/{l\'endpoint_de_notre_choix}
 
-🌐 Application Node.js
-📍 Endpoints Disponibles
+
+📍 Endpoints Disponibles :
+
+
 Route	Méthode	Description
 /	GET	Page d'accueil
 /status	GET	Statut API + timestamp
