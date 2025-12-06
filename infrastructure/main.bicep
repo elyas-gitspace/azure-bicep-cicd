@@ -1,39 +1,49 @@
-// Fichier bicep que j'ai écrit à l'aide de la documentation officielle d'Azure via leurs github : 
-// https://github.com/Azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.web
-                   
-                   
-                   
-                   // PARAMETRES //
-
+// ==============================
+// PARAMÈTRES GLOBAUX
+// ==============================
 
 @description('Nom de l\'app service plan')
 param elyassAppServicePlan string
 
-@description('sku qui va dicter la puissance et taille de l\'app service plan')
+@description('SKU de l\'App Service Plan')
 param sku string = 'B1'
 
+@description('Nom de la Web App')
+param elyassWebApp string
 
-                // ==============================
-                // ☁️ APP SERVICE PLAN (Linux)
-                // ==============================
+@description('Nom du compte de stockage')
+param elyassStorageAccount string
 
+@description('SKU du compte de stockage (Redondance)')
+param storageAccountsku string = 'Standard_LRS'
 
-// PARAMETRES //
+@description('Paramètres de tags')
+param tags object = {
+  Description: 'WebApp hébergeant notre appli node js'
+}
 
-@description('Nom de l\'app service plan')
-param elyassAppServicePlan string
+@description('Accessibilité publique')
+param publicNetworkAccess string = 'Enabled'
 
-@description('sku qui va dicter la puissance et taille de l\'app service plan')
-param sku string = 'B1'
+// ==============================
+// 📊 DIAGNOSTIC SETTINGS PARAMÈTRES
+// ==============================
 
-// Déploiement de l'App service plan (qui va héberger la Web App qui elle même va accueillir notre app node js). App service plan définit la puissance de la Web App, 
-// et l'OS que je choisi (en loccurence Linux)
+@description('Nom de la ressource diagnosticSettings')
+param diagnosticSettingsName string = 'diagnosticSettings_ressource'
+
+@description('Type de destination des logs')
+param destination string = 'AzureStorage'
+
+// ==============================
+// ☁️ APP SERVICE PLAN (Linux)
+// ==============================
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: elyassAppServicePlan
   location: 'westeurope'
   sku: {
-    name: sku // puissance et taille du App Service Plan
+    name: sku
   }
   kind: 'linux'
   properties: {
@@ -41,26 +51,9 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   }
 }
 
-                // ==============================
-                // 🌐 WEB APP 
-                //
-                // (la Node.js app que l'on a enregistré dans le clouddrive du cloudshell dans ~/clouddrive/azure-bicep-cicd/app/bicep-azure-cicd.js)
-                // ==============================
-
-
-
-// PARAMETRES //
-
-@description('Nom de la Web App')
-param elyassWebApp string
-
-@description('Paramètre tag')
-param tags object = {
-  'Description' : 'WebApp hébergeant notre appli node js'
-}
-
-@description('Accessibilité publique')
-param publicNetworkAccess string = 'Enabled'
+// ==============================
+// 🌐 WEB APP
+// ==============================
 
 var appSettings = [
   {
@@ -73,90 +66,62 @@ var appSettings = [
   }
 ]
 
-// Déploiement //
-
 resource webApp 'Microsoft.Web/sites@2023-12-01' = {
   name: elyassWebApp
   location: 'westeurope'
   tags: tags
-  kind: 'linux'                    // on choisit l'os sur lequel va tourner l'app (doit être le même que l'os de l'App service Plan !)
+  kind: 'linux'
   properties: {
-    serverFarmId: appServicePlan.id // Cela se réfère automatiquement au service plan que l'on a définit juste au dessus
+    serverFarmId: appServicePlan.id
     siteConfig: {
+      linuxFxVersion: 'NODE|18-lts'
       appSettings: appSettings
     }
-    httpsOnly: true           // notre webApp n'acceptera les connexions que de https
+    httpsOnly: true
     publicNetworkAccess: publicNetworkAccess
   }
 }
 
-
-                // ==============================
-                // 🗄️ STORAGE ACCOUNT (Logs / Data)
-                // ==============================
-
-
-// PARAMETRES //
-
-@description('Nom de compte de stockage')
-param elyassStorageAccount string
-
-@description('sku --> niveau de redondance du compte de stockage')
-param storageAccountsku string = 'Standard_LRS'
-
-// Déploiement //
+// ==============================
+// 🗄️ STORAGE ACCOUNT
+// ==============================
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   name: elyassStorageAccount
   location: 'westeurope'
   sku: {
-    name: storageAccountsku // le niveau de redondance des données (local, interzone, etc... La j'ai pris le moins cher donc le local --> Locally Redundant Storage)
+    name: storageAccountsku
   }
-  kind: 'StorageV2' // Le type de compte de stockage que l'on souhaite
-  properties: {} 
+  kind: 'StorageV2'
+  properties: {}
 }
 
-
-// ==============================================
-// 📊 Partie qui va rediriger les logs de la Web App (que l'on a défini plus haut) 
-//     vers le Storage Account (également définit en amont)
-// ==============================================
-
-// Template officiel sur lequel je me suis appuyé pour rédiger la redirection des logs : https://learn.microsoft.com/en-us/azure/templates/microsoft.insights/diagnosticsettings?pivots=deployment-language-bicep
-
-@description('Nom de la ressource diagnosticSettings')
-param name string = 'diagnosticSettings_ressource'
-
-@description('destination des logs')
-param destination string = 'AzureStorage'
+// ==============================
+// 📊 DIAGNOSTIC SETTINGS
+// ==============================
 
 resource webApp_logs_redirection 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: webApp
-  name: name
+  name: diagnosticSettingsName
   properties: {
     logAnalyticsDestinationType: destination
     logs: [
-
-      // On va définir les logs de l'App service que l'on souhaite récupérer. Pour savoir les catégories de logs possibles, je me suis rendu sur la doc officielle d'Azure sur ce sujet
-      // https://learn.microsoft.com/en-us/azure/azure-monitor/reference/supported-logs/microsoft-web-sites-logs
       {
-        category: 'AppServiceHTTPLogs'       // ici on prends les logs http de l'App service
-        enabled: true
-        retentionPolicy: {
-          days: 30                           // on choisit de conserver les données 30 jours
-          enabled: true
-        }
-      }
-
-      {
-        category: 'AppServiceConsoleLogs'  
+        category: 'AppServiceHTTPLogs'
         enabled: true
         retentionPolicy: {
           days: 30
           enabled: true
         }
       }
-  
+      {
+        category: 'AppServiceConsoleLogs'
+        enabled: true
+        retentionPolicy: {
+          days: 30
+          enabled: true
+        }
+      }
       {
         category: 'AppServiceAuditLogs'
         enabled: true
@@ -165,18 +130,17 @@ resource webApp_logs_redirection 'Microsoft.Insights/diagnosticSettings@2021-05-
           enabled: true
         }
       }
-
     ]
-    metrics: [                          // on récupère également les métriques de la webApp et de l'App service sur lequel repose la webApp
+    metrics: [
       {
-        category: 'AllMetrics'          // on veut toutes les métriques
+        category: 'AllMetrics'
         enabled: true
         retentionPolicy: {
-          days: 30                      // on conserve les données 30 jours
+          days: 30
           enabled: true
         }
       }
     ]
-    storageAccountId: storageAccount.id // Ca va rediriger les logs vers le storage account que l'on a définit plus haut, grâce à '.id'
+    storageAccountId: storageAccount.id
   }
 }
