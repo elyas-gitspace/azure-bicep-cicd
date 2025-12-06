@@ -3,7 +3,11 @@ name : cicd-workflow-az-bicep
 on:
   push:
     branches:
-      - main                                             # on fait en sorte que ce pipeline soit déclenché à chaque push vers mon repo github
+      - main                                             
+      # on fait en sorte que ce pipeline soit déclenché à chaque push vers mon repo github
+    paths-ignore:
+      - 'README.md'
+      - '**/*.md'
 
 env:
   AZURE_WEBAPP_NAME: elyassWebApp   
@@ -56,8 +60,8 @@ jobs:
 
     - name: Le run du script de déploiement (deploy.sh)
       run: |
-        chmod +x ./scripts/deploy.sh
-        ./scripts/deploy.sh
+        chmod +x $GITHUB_WORKSPACE/scripts/deploy.sh
+        $GITHUB_WORKSPACE/scripts/deploy.sh
 
     - name: Déploiement de l'app sur la webapp
       uses: azure/webapps-deploy@v3
